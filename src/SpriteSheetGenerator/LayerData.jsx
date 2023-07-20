@@ -1,3 +1,4 @@
+// Classes
 function Point2D(x, y) {
     this.x = x;
     this.y = y;
@@ -19,6 +20,13 @@ function LayerDataElement(layer, parentLayerData) {
     }
 }
 
+// Wraps an array of LayerDataElements
+function LayerDataElementArray(name, layerDataElementArray) {
+    this.isArray = true;
+    this.name = name;
+    this.layers = layerDataElementArray;
+}
+
 LayerDataElement.prototype.getPerimeter = function() {
     return 2 * this.w + 2 * this.h;
 };
@@ -27,12 +35,8 @@ LayerDataElement.prototype.getArea = function() {
     return this.w * this.h;
 };
 
-function LayerDataElementArray(name, layerDataElementArray) {
-    this.isArray = true;
-    this.name = name;
-    this.layers = layerDataElementArray;
-}
 
+// Sort functions
 function layerDataSortByPerimeterFn(a, b) {
     const ap = a.getPerimeter();
     const bp = b.getPerimeter();
@@ -65,6 +69,7 @@ function layerDataSortByHeightFn(a, b) {
     else return -1;
 }
 
+// Functions for building layer data
 
 function handleGroup(layerGroup, layerDataArray, parentLayerData) {
     // Check if group is tagged for relative positioning
@@ -97,6 +102,7 @@ function handleGroup(layerGroup, layerDataArray, parentLayerData) {
             }
         }
     } else if (hasArrayTag(layerGroup)) {
+        // Group is marked with [A]
         const name = nameWithoutTags(layerGroup.name);
         const newLayerDataArray = [];
         for (i = 0; i < layerGroup.layers.length; i++) {

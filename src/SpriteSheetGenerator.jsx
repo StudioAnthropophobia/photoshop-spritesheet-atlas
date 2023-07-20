@@ -53,12 +53,12 @@ function main() {
 
     // Duplicate and preprocess document
     var preProcessedDoc = srcDoc.duplicate(srcDoc.name + " Preprocessed");
-    app.activeDocument = preProcessedDoc;
     preProcessDocument(preProcessedDoc);
+
     // Walk through doc layers and build layer data
     layerData = buildLayerData(preProcessedDoc.layers);
 
-    // Run the packing algorithm on layer data
+    // Run the packing algorithm and write output coordinates to layer data
     packingOutput = packLayers(layerData, userOptions);
 
     // Create the output .psd document
@@ -66,18 +66,18 @@ function main() {
     if (destDoc === false)
         throw "Destination document could not be created.";
 
-    // Copy layers into the output psd
+    // Copy layers into the output .psd
     copyArtLayersToDoc(preProcessedDoc, destDoc);
 
     // Close preprocessed doc, no longer needed
     preProcessedDoc.close(SaveOptions.DONOTSAVECHANGES);
 
-    // Layout layers in the output .psd to the final form, merge
+    // Layout layers in the output .psd according to packing result, merge
     translateLayers(destDoc, layerData);
     destDoc.mergeVisibleLayers();
     destDoc.layers[0].name = "Sprite Sheet";
 
-    // Trim output if power-of-two dimensions not set
+    // Trim the output sprite sheet, if power-of-two dimensions are not requested
     if (!userOptions[kUserOptionsPowerOfTwoKey]) {
         if (!userOptions[kUserOptionsSquareKey])
             destDoc.trim(TrimType.TRANSPARENT);
@@ -96,9 +96,14 @@ function main() {
     exportJSON(prunedLayerData, userOptions[kUserOptionsJSONPathKey]);
     exportPNG(destDoc, userOptions[kUserOptionsPNGPathKey]);
 
-    // Close destination .psd 
-    if (!userOptions[kUserOptionsKeepDestDocOpenKey])
+    // Set output .psd active if "keep open" option is used
+    if (userOptions[kUserOptionsKeepDestDocOpenKey]) {
+        app.activeDocument = destDoc;
+    } else {
+        // Close output doc, return to original
         destDoc.close(SaveOptions.DONOTSAVECHANGES);
+        app.activeDocument = srcDoc;
+    }
 
     // Restore preferences
     app.preferences.rulerUnits = prevRulerUnits;
@@ -109,12 +114,11 @@ function main() {
 function createDestDoc(srcDoc, name, width, height) {
     var destDoc = false;
     destDoc = app.documents.add(width, height, srcDoc.resolution, name);
-    app.activeDocument = destDoc;
     return destDoc;
 }
 
+// Translates frames in the sprite sheet, to positions determined by the packing algorithm
 function translateLayers(destDoc, layerDataArray) {
-    app.activeDocument = destDoc;
     for (var i = 0; i < layerDataArray.length; i++) {
         var layerData = layerDataArray[i];
         if (layerData.isArray) {

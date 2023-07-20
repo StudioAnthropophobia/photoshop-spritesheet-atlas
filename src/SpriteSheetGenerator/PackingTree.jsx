@@ -20,7 +20,6 @@ TreeNode.prototype.splitHorizontally = function(layerData) {
 };
 
 TreeNode.prototype.splitVertically = function(layerData) {
-    // Split node vertically
     this.leftChild = new TreeNode(this.x, this.y,
         this.w, layerData.h + this.padding);
 
@@ -52,7 +51,7 @@ TreeNode.prototype.insert = function(layerData) {
             return null;
         }
 
-        // Perfect fit, record data and return this node
+        // Perfect fit, write position to layer data and return this node
         if (layerData.w + this.padding === this.w && layerData.h + this.padding === this.h) {
             this.occupied = true;
             layerData.destPos.x = this.x;
@@ -60,7 +59,7 @@ TreeNode.prototype.insert = function(layerData) {
             return this;
         }
 
-        // Otherwise split node, create children
+        // Otherwise, split node to create children
         // Decide whether to split horizontally or vertically
         const dw = this.w - layerData.w;
         const dh = this.h - layerData.h;
@@ -71,7 +70,7 @@ TreeNode.prototype.insert = function(layerData) {
             this.splitVertically(layerData);
         }
 
-        // Insert into the first child that was just created
+        // Insert into the first child that was just created (will fit perfectly)
         return this.leftChild.insert(layerData);
     }
 };
@@ -121,7 +120,7 @@ function buildTree(srcLayerDataArray, pow2, square) {
 
     var w = initialD;
     var h = initialD;
-
+    // Brute force iterations with growing canvas size, until all frames fit
     while ((root = buildTreeWithSize(srcLayerDataArray, w, h)) === null) {
         // Could not fit, canvas needs to grow
         if (pow2) {
@@ -141,18 +140,6 @@ function buildTree(srcLayerDataArray, pow2, square) {
     return root;
 }
 
-function packLayers(layerDataArray, userOptions) {
-    const pow2 = userOptions[kUserOptionsPowerOfTwoKey];
-    const square = userOptions[kUserOptionsSquareKey];
-    TreeNode.prototype.padding = userOptions[kUserOptionsPaddingKey];
-    const sortedData = sortAndFlattenLayerData(layerDataArray, userOptions);
-    const root = buildTree(sortedData, pow2, square);
-    return {
-        width: root.w,
-        height: root.h
-    };
-}
-
 function sortAndFlattenLayerData(layerDataArray, userOptions) {
     const sortedArray = [];
     // Flatten
@@ -167,21 +154,30 @@ function sortAndFlattenLayerData(layerDataArray, userOptions) {
             sortedArray.push(data);
         }
     }
-    // Sort
-    var sortFunction;
+
+    // Decide sort function based on user options
+    sortingFunctionsByOptionValue = {};
+    sortingFunctionsByOptionValue[optionValueSortByArea] = layerDataSortByAreaFn;
+    sortingFunctionsByOptionValue[optionValueSortByPerimeter] = layerDataSortByPerimeterFn;
+    sortingFunctionsByOptionValue[optionValueSortByWidth] = layerDataSortByWidthFn;
+    sortingFunctionsByOptionValue[optionValueSortByHeight] = layerDataSortByHeightFn;
 
     const sortOption = userOptions[kUserOptionsSortByKey];
-    if (sortOption === optionValueSortByArea)
-        sortFunction = layerDataSortByAreaFn;
-    else if (sortOption === optionValueSortByPerimeter)
-        sortFunction = layerDataSortByPerimeterFn;
-    else if (sortOption === optionValueSortByWidth)
-        sortFunction = layerDataSortByWidthFn;
-    else if (sortOption === optionValueSortByHeight)
-        sortFunction = layerDataSortByHeightFn;
-    else
-        throw "Sorting function not set.";
+    const sortFunction = sortingFunctionsByOptionValue[sortOption];
 
     sortedArray.sort(sortFunction);
     return sortedArray;
+}
+
+// Returns dimensions of the packed sprite sheet
+function packLayers(layerDataArray, userOptions) {
+    const pow2 = userOptions[kUserOptionsPowerOfTwoKey];
+    const square = userOptions[kUserOptionsSquareKey];
+    TreeNode.prototype.padding = userOptions[kUserOptionsPaddingKey];
+    const sortedData = sortAndFlattenLayerData(layerDataArray, userOptions);
+    const root = buildTree(sortedData, pow2, square);
+    return {
+        width: root.w,
+        height: root.h
+    };
 }

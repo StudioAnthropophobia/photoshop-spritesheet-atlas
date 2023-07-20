@@ -19,15 +19,13 @@ function getAllArtLayers(srcDoc) {
 }
 
 function copyArtLayersToDoc(srcDoc, destDoc) {
-    app.activeDocument = srcDoc;
     const layers = getAllArtLayers(srcDoc);
+    app.activeDocument = srcDoc;
 
     for (var i = 0; i < layers.length; i++) {
-        if (hasPointTag(layers[i]) ||
-            layers[i].isBackgroundLayer) {
+        if (hasPointTag(layers[i]) || layers[i].isBackgroundLayer) {
             continue;
         }
-
         layers[i].duplicate(destDoc, ElementPlacement.PLACEATEND);
     }
 
@@ -39,13 +37,13 @@ function copyArtLayersToDoc(srcDoc, destDoc) {
 // Walk recursively through layer objects, store references to groups marked with [M]
 function recursiveMarkForMerge(layers) {
     var markedLayers = [];
+
     for (var i = 0; i < layers.length; i++) {
         if (layers[i].typename === "LayerSet") {
-            // Whole layerset is invisible, no need to loop through children
             if (hasMergeTag(layers[i])) {
                 markedLayers.push(layers[i]);
             } else {
-                // Group is visible but individual children might be invisible, so loop through those
+                // Loop through children
                 markedLayers = markedLayers.concat(recursiveMarkForMerge(layers[i].layers));
             }
         }
@@ -57,17 +55,13 @@ function mergeMarkedLayerGroups(targetDoc) {
     var marked = recursiveMarkForMerge(targetDoc.layers);
     for (var i = 0; i < marked.length; i++) {
         var group = marked[i];
-        if (group.typename !== "LayerSet")
-            throw "Merge tag [M] not supported for single layers.";
-        else {
-            var name = nameWithoutTags(group.name);
-            var mergedLayer = group.merge();
-            mergedLayer.name = name;
-        }
+        var name = nameWithoutTags(group.name);
+        var mergedLayer = group.merge();
+        mergedLayer.name = name;
     }
 }
 
-// Store references to layers and groups that are invisible or tagged with [I]
+// Store references to layers and groups that are invisible, or tagged with [I]
 function recursiveMarkForDelete(layers) {
     var markedLayers = [];
     for (var i = 0; i < layers.length; i++) {
@@ -80,7 +74,7 @@ function recursiveMarkForDelete(layers) {
             if (!layers[i].visible || hasIgnoreTag(layers[i])) {
                 markedLayers.push(layers[i]);
             } else {
-                // Group is visible but individual children might be invisible, so loop through those
+                // Loop through children
                 markedLayers = markedLayers.concat(recursiveMarkForDelete(layers[i].layers));
             }
         } else
@@ -96,7 +90,7 @@ function deleteInvisibleLayerObjects(targetDoc) {
     }
 }
 
-// Removes invisible layers, merges groups marked with [M]
+// Removes invisible and ignored layers, merges groups marked with [M]
 function preProcessDocument(targetDoc) {
     deleteInvisibleLayerObjects(targetDoc);
     mergeMarkedLayerGroups(targetDoc);

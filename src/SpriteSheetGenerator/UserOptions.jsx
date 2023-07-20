@@ -117,6 +117,7 @@ function getUserOptions(srcDoc) {
     dlg.packingOptionsGroup.squareCheckBox.alignment = "left";
     dlg.packingOptionsGroup.squareCheckBox.indent = indent;
     dlg.packingOptionsGroup.squareCheckBox.value = false;
+
     // Padding
     dlg.packingOptionsGroup.paddingGroup = dlg.packingOptionsGroup.add("group");
     var paddingGroup = dlg.packingOptionsGroup.paddingGroup;
@@ -130,7 +131,8 @@ function getUserOptions(srcDoc) {
     paddingGroup.editText.onChanging = function() {
         paddingGroup.editText.text = paddingGroup.editText.text.replace(/[^0-9]/gi, "");
     };
-    // Sort
+
+    // Sort options
     dlg.packingOptionsGroup.sortGroup = dlg.packingOptionsGroup.add("group");
     var sortGroup = dlg.packingOptionsGroup.sortGroup;
     sortGroup.orientation = "column";
@@ -225,9 +227,12 @@ function getUserOptions(srcDoc) {
         jsonFileGroup.browseButton.enabled = true;
         pngFileGroup.browseButton.enabled = true;
     }
+
+    // Present dialog
     dlg.center();
     var dlgResult = dlg.show(); // 1 = ok, 2 = cancel
 
+    // Build user options object based on dialog input
     var userOptions = {};
     userOptions[kUserOptionsDocNameKey] = app.activeDocument.name;
     userOptions[kUserOptionsUseDefaultPathsKey] = defaultCheckBox.value;

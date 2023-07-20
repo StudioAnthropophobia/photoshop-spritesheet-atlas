@@ -1,3 +1,5 @@
+// Constructor takes a LayerDataElement object as parameter.
+// This will be the form of the frame elements in the output atlas.
 function PrunedLayerData(layerData) {
     this.x = layerData.destPos.x;
     this.y = layerData.destPos.y;
@@ -8,6 +10,7 @@ function PrunedLayerData(layerData) {
     this.points = layerData.points;
 }
 
+// Takes an array containing LayerDataElements and LayerDataElementArrays
 // Returns an object that can be directly stringified and written to a .json file
 function pruneLayerData(layerDataArray) {
     var prunedData = {};

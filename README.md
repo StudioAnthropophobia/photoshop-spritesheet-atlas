@@ -1,5 +1,5 @@
 # Sprite sheet and atlas generator script for Adobe Photoshop
-Simple but versatile Photoshop script for automated generation of spritesheets and JSON atlases directly from a Photoshop document.
+Simple but versatile Photoshop script for automated generation of spritesheets and JSON atlases directly from a Photoshop document layer hierarchy.
 
 ## What it does
 This script copies individual layers from your Photoshop document and packs them neatly into a spritesheet,

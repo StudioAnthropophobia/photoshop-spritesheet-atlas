@@ -27,8 +27,8 @@ function isNaturalNumber(num) {
 }
 
 function getUserOptions(srcDoc) {
-    var lastUserOptions = retrieveLastUserOptions();
     var defaultPaths = composeDefaultFilePaths(srcDoc);
+    var lastUserOptions = retrieveLastUserOptions();
     var indent = 16;
     // Build options dialog and set default values
     var dlg = new Window("dialog", "Generate sprite sheet");
@@ -111,7 +111,7 @@ function getUserOptions(srcDoc) {
     dlg.packingOptionsGroup.pow2CheckBox = dlg.packingOptionsGroup.add("checkbox", undefined, "Power-of-two");
     dlg.packingOptionsGroup.pow2CheckBox.alignment = "left";
     dlg.packingOptionsGroup.pow2CheckBox.indent = indent;
-    dlg.packingOptionsGroup.pow2CheckBox.value = true;
+    dlg.packingOptionsGroup.pow2CheckBox.value = false;
 
     dlg.packingOptionsGroup.squareCheckBox = dlg.packingOptionsGroup.add("checkbox", undefined, "Square");
     dlg.packingOptionsGroup.squareCheckBox.alignment = "left";
@@ -194,7 +194,7 @@ function getUserOptions(srcDoc) {
             dlg.packingOptionsGroup.pow2CheckBox.value = lastUserOptions[kUserOptionsPowerOfTwoKey];
         }
         if (lastUserOptions[kUserOptionsSquareKey] !== undefined) {
-            dlg.packingOptionsGroup.pow2CheckBox.value = lastUserOptions[kUserOptionsSquareKey];
+            dlg.packingOptionsGroup.squareCheckBox.value = lastUserOptions[kUserOptionsSquareKey];
         }
         if (lastUserOptions[kUserOptionsKeepDestDocOpenKey] !== undefined) {
             dlg.otherOptionsGroup.keepDestDocOpenCheckBox.value = lastUserOptions[kUserOptionsKeepDestDocOpenKey];
@@ -296,7 +296,7 @@ function retrieveLastUserOptions() {
     result[kUserOptionsUseDefaultPathsKey] = getActionDescValue(desc, "getBoolean", kUserOptionsUseDefaultPathsKey, true);
     result[kUserOptionsPNGPathKey] = getActionDescValue(desc, "getString", kUserOptionsPNGPathKey, "");
     result[kUserOptionsJSONPathKey] = getActionDescValue(desc, "getString", kUserOptionsJSONPathKey, "");
-    result[kUserOptionsPowerOfTwoKey] = getActionDescValue(desc, "getBoolean", kUserOptionsPowerOfTwoKey, true);
+    result[kUserOptionsPowerOfTwoKey] = getActionDescValue(desc, "getBoolean", kUserOptionsPowerOfTwoKey, false);
     result[kUserOptionsSquareKey] = getActionDescValue(desc, "getBoolean", kUserOptionsSquareKey, false);
     result[kUserOptionsKeepDestDocOpenKey] = getActionDescValue(desc, "getBoolean", kUserOptionsKeepDestDocOpenKey, false);
     result[kUserOptionsPaddingKey] = getActionDescValue(desc, "getInteger", kUserOptionsPaddingKey, 1);

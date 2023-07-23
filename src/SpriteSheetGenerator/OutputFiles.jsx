@@ -7,6 +7,7 @@ function composeDefaultFilePaths(srcDoc) {
     const outputFileWithoutExtension = outputFolderPath + "/" + fileNameWithoutExtension;
     const outputJSONPath = outputFileWithoutExtension + ".json";
     const outputPNGPath = outputFileWithoutExtension + ".png";
+
     return {
         jsonPath: outputJSONPath,
         pngPath: outputPNGPath
@@ -27,6 +28,7 @@ function exportJSON(object, path) {
         fileObject.close();
     } catch (e) {
         alert(e);
+        throw "JSON file could not be created.";
     }
 }
 

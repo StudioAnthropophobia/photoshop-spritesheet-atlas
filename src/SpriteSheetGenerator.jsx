@@ -2,23 +2,33 @@
 //@script "Sprite sheet generator"
 
 //@include "SpriteSheetGenerator/json2.js"
-//@include "SpriteSheetGenerator/LayerActions.jsx"
-//@include "SpriteSheetGenerator/LayerData.jsx"
-//@include "SpriteSheetGenerator/PrunedLayerData.jsx"
+
+//@include "SpriteSheetGenerator/ActionTranslate.jsx"
+//@include "SpriteSheetGenerator/AtlasFrame.jsx"
 //@include "SpriteSheetGenerator/LayerTags.jsx"
 //@include "SpriteSheetGenerator/OutputFiles.jsx"
 //@include "SpriteSheetGenerator/PackingTree.jsx"
+//@include "SpriteSheetGenerator/PreProcess.jsx"
+//@include "SpriteSheetGenerator/SpriteDataCollection.jsx"
+//@include "SpriteSheetGenerator/SpriteFrame.jsx"
 //@include "SpriteSheetGenerator/UserOptions.jsx"
 
 var gScriptResult;
 
 try {
+    // Store old preferences
+    var prevRulerUnits = app.preferences.rulerUnits;
+    var prevTypeUnits = app.preferences.typeUnits;
+    app.preferences.rulerUnits = Units.PIXELS;
+    app.preferences.typeUnits = TypeUnits.PIXELS;
+
     var result = main();
+
     if (result === false) {
         gScriptResult = "cancel";
     } else {
         gScriptResult = "ok";
-        alert("Sprite sheet generated successfully.", "Script finished");
+        alert("Sprite sheet generated successfully.", "Script finished " + "(" + ($.hiresTimer) / 1e6 + " seconds)");
     }
 } catch (e) {
     if (app.displayDialogs !== DialogModes.NO) {
@@ -27,57 +37,57 @@ try {
         else
             alert(e);
     }
-
     gScriptResult = "cancel";
+} finally {
+    // Restore preferences
+    app.preferences.rulerUnits = prevRulerUnits;
+    app.preferences.typeUnits = prevTypeUnits;
 }
 
 gScriptResult;
 
 function main() {
-    // Store old preferences
-    var prevRulerUnits = app.preferences.rulerUnits;
-    app.preferences.rulerUnits = Units.PIXELS;
 
     if (app.documents.length === 0) {
         throw "No open documents.";
     }
 
     const srcDoc = app.activeDocument;
-    var layerData = [];
-    var packingOutput = {};
+    const frameData = new SpriteFrameCollection();
+
     // Open options dialog
     var userOptions = getUserOptions(srcDoc);
     if (userOptions === false) {
         return false;
     }
 
-    // Duplicate and preprocess document
-    var preProcessedDoc = srcDoc.duplicate(srcDoc.name + " Preprocessed");
-    preProcessDocument(preProcessedDoc);
+    // Reset timer
+    $.hiresTimer;
 
-    // Walk through doc layers and build layer data
-    layerData = buildLayerData(preProcessedDoc.layers);
+    // Duplicate, preprocess document
+    const destDoc = srcDoc.duplicate(srcDoc.name + " spritesheet");
+    app.activeDocument = destDoc;
+    preProcessDocument(destDoc);
+
+    // Walk through doc layers, detect sprite frames and sort
+    frameData.buildFromDocument(destDoc);
+    frameData.sortWithUserOptions(userOptions);
+
+    // Clean unwanted layers from sheet document
+    frameData.removePointLayers();
 
     // Run the packing algorithm and write output coordinates to layer data
-    packingOutput = packLayers(layerData, userOptions);
+    frameData.packFrames(userOptions);
+    destDoc.resizeCanvas(frameData.packedWidth, frameData.packedHeight, AnchorPosition.TOPLEFT);
 
-    // Create the output .psd document
-    var destDoc = createDestDoc(preProcessedDoc, srcDoc.name + "Spritesheet", packingOutput.width, packingOutput.height);
-    if (destDoc === false)
-        throw "Destination document could not be created.";
-
-    // Copy layers into the output .psd
-    copyArtLayersToDoc(preProcessedDoc, destDoc);
-
-    // Close preprocessed doc, no longer needed
-    preProcessedDoc.close(SaveOptions.DONOTSAVECHANGES);
+    // Translate layers
+    frameData.translateLayers();
 
     // Layout layers in the output .psd according to packing result, merge
-    translateLayers(destDoc, layerData);
     destDoc.mergeVisibleLayers();
-    destDoc.layers[0].name = "Sprite Sheet";
+    destDoc.artLayers[0].name = "Sprite Sheet";
 
-    // Trim the output sprite sheet, if power-of-two dimensions are not requested
+    // Trim the output sprite sheet, if power-of-two dimensions were not requested
     if (!userOptions[kUserOptionsPowerOfTwoKey]) {
         if (!userOptions[kUserOptionsSquareKey])
             destDoc.trim(TrimType.TRANSPARENT);
@@ -89,45 +99,18 @@ function main() {
         }
     }
 
-    // Prune layer data
-    var prunedLayerData = pruneLayerData(layerData);
+    // Build final output atlas
+    var atlasObject = frameData.createAtlasObject();
 
     // Save .PNG and atlas files
-    exportJSON(prunedLayerData, userOptions[kUserOptionsJSONPathKey]);
+    exportJSON(atlasObject, userOptions[kUserOptionsJSONPathKey]);
     exportPNG(destDoc, userOptions[kUserOptionsPNGPathKey]);
 
-    // Set output .psd active if "keep open" option is used
-    if (userOptions[kUserOptionsKeepDestDocOpenKey]) {
-        app.activeDocument = destDoc;
-    } else {
-        // Close output doc, return to original
+    // Close output doc if keep open not set, return to original
+    if (!userOptions[kUserOptionsKeepDestDocOpenKey]) {
         destDoc.close(SaveOptions.DONOTSAVECHANGES);
         app.activeDocument = srcDoc;
     }
 
-    // Restore preferences
-    app.preferences.rulerUnits = prevRulerUnits;
-
     return true;
-}
-
-function createDestDoc(srcDoc, name, width, height) {
-    var destDoc = false;
-    destDoc = app.documents.add(width, height, srcDoc.resolution, name);
-    return destDoc;
-}
-
-// Translates frames in the sprite sheet, to positions determined by the packing algorithm
-function translateLayers(destDoc, layerDataArray) {
-    for (var i = 0; i < layerDataArray.length; i++) {
-        var layerData = layerDataArray[i];
-        if (layerData.isArray) {
-            translateLayers(destDoc, layerData.layers);
-        } else {
-            var layer = destDoc.artLayers.getByName(layerData.name);
-            var curX = layer.bounds[0].as("px");
-            var curY = layer.bounds[1].as("px");
-            layer.translate(layerData.destPos.x - curX, layerData.destPos.y - curY);
-        }
-    }
 }

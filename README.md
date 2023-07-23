@@ -12,10 +12,11 @@ After the initial setup of your Photoshop document structure, the script require
 The script was written mainly with "pixel art-ish" 2D games in mind, but should work just fine with higher-resolution raster graphics as well.
 
 ## Installation
-Simply drop the contents of the [src](src) folder to where the other Photoshop scripts reside on your system, usually something like
+- Download the [latest release](https://github.com/StudioAnthropophobia/photoshop-spritesheet-atlas/releases/latest/download/SpriteSheetGenerator.zip) 
+- Drop the contents of **SpriteSheetGenerator.zip** to where the other Photoshop scripts reside on your system, usually something like:
 
-- Windows: _.../Program Files/Adobe/Adobe Photoshop XXXX/Presets/Scripts/_
-- Mac: _Applications/Adobe Photoshop XXXX/Presets/Scripts_
+    - Windows: _.../Program Files/Adobe/Adobe Photoshop XXXX/Presets/Scripts/_
+    - Mac: _Applications/Adobe Photoshop XXXX/Presets/Scripts_
 
 **You can also save the script files in an arbitrary location, create a shortcut pointing to _SpriteSheetGenerator.jsx_ and place said shortcut into the Photoshop Scripts folder.**
 

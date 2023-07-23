@@ -9,7 +9,7 @@ Additional data, such as relative positions and anchor points can also be includ
 
 After the initial setup of your Photoshop document structure, the script requires no further manual preparation before each run of the script, and no modifications to your original Photoshop document are made by the script. This way you can rapidly modify and test out your graphics.
 
-The script was written mainly with "pixel art-ish" 2D games in mind, but should work just fine with higher-resolution raster graphics too.
+The script was written mainly with "pixel art-ish" 2D games in mind, but should work just fine with higher-resolution raster graphics as well.
 
 ## Installation
 Simply drop the contents of the [src](src) folder to where the other Photoshop scripts reside on your system, usually something like
@@ -134,7 +134,7 @@ Let's go through the available tags and look at some examples:
 
 ### Ignore layer **\[I]**
 If you want to exclude layers or layer groups from the sprite sheet, but don't want to bother setting them invisible every time you run the script (guidelines, reference images etc), tag them with "**\[I]** ".
-This exclude the layers or groups regardless of their visibility.
+This will exclude the layer or group, regardless of its visibility.
 
 ### Arrays **\[A]**
 Say you're composing a spritesheet for a character in your game, and you have multiple animations in the document for said character (walk cycle, run cycle etc).
@@ -396,26 +396,23 @@ The point layers have as many applications as you can come up with. For instance
 
 ## ~~Frequently Asked~~ Anticipated Questions
 **Can I generate a different atlas format?**
-  - Not out of the box, but you could modify the `PrunedLayerData` class and `pruneLayerData()` function in _PrunedLayerData.jsx_ to get a output data format of your liking.
-    If you don't want to use json at all, you could modify `exportJSON()` in _OutputFiles.jsx_ to use something else.
+- Not out of the box, but you could modify the `AtlasFrame` class in *AtlasFrame.jsx* and `createAtlasObject()` function in _SpriteDataCollection.jsx_ to get a output data format of your liking.
+- If you don't want to use json at all, you need to also modify/change `exportJSON()` in _OutputFiles.jsx_ to use something else.
 
 **Can I get other image format than png?**
   - Not out of the box, but you could modify `exportPNG()` in _OutputFiles.jsx_ to suit your needs.
-  - You can also tick *"Leave destination document open"* from the options, and convert it to whatever you want after the script finishes. (The png file would still be generated, though).
+  - For single cases you could tick *"Leave destination document open"* from the options, and then convert the sheet to whatever format you want after the script finishes. (The png file would still be generated, though).
 
 **Why does my output sheet contain a lot of empty space?**
   1. If the empty space is between sprites, check your layers for any stray (possibly semi-transparent) pixels.
   2. Try playing around with the *padding* and *packing options* in the options panel
-  3. If these steps don't work, maybe you could try adding more sprites to the document, to utilize the space more efficiently?
-  4. Improve the `buildTree()` function in _PackingTree.jsx_. (Currently, the packing algorithm simply tries to repeatedly fit the frames into a canvas of a defined size, scaling the canvas up with each iteration, until all the frames fit).
-  5. Else go through the 5 stages of grief
-  6. -> "It is what it is."
+  3. Improve the packing algorithm in _PackingTree.jsx_.
 
 **The script fails with *"internal error"*, *"could not complete..."* or *"Merge Layers not available"***
   - Although quite rare, these errors sometimes pop up, seemingly at random. I don't yet know exactly what's the cause, but I am looking into it. Let me know if you have insight on the matter. Sometimes these steps help:
       - Restart Photoshop and try again. (Yeah...)
       - Check your document's layer structure for conflicting names. Ideally, all layers and groups should be named uniquely (Except **\[P]** layers of course).
-      - Make a new group on your document's root level and put your entire layer structure inside it. Then try running the script again.
+      - Make a new group on your document's root level and put your entire layer structure inside it, then try running the script again.
 
 **The script fails with stack overflow**
   - Since the packing algorithm uses a binary tree with recursive insert operations, and the stack depth in Photoshop's scripting environment seems to be a little over a thousand, a stack overflow can occur if you have hundreds of sprites in your document. If that's not the case, it is likely a bug. If you want to contribute, you could rewrite the packing tree operations to iterative ones to work around this limitation. (I was initially going to do that, but saw no need for such large sprite sheets).

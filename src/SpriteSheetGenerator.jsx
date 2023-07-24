@@ -6,6 +6,7 @@
 //@include "SpriteSheetGenerator/ActionTranslate.jsx"
 //@include "SpriteSheetGenerator/AtlasFrame.jsx"
 //@include "SpriteSheetGenerator/LayerTags.jsx"
+//@include "SpriteSheetGenerator/Dialog/Dialog.jsx"
 //@include "SpriteSheetGenerator/OutputFiles.jsx"
 //@include "SpriteSheetGenerator/PackingTree.jsx"
 //@include "SpriteSheetGenerator/PreProcess.jsx"

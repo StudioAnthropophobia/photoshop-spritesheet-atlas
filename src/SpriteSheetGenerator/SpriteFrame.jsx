@@ -3,14 +3,15 @@ function Point2D(x, y) {
     this.y = y;
 }
 
-// Single frame element constructed from an ArtLayer
+// Single frame element, constructed from an ArtLayer
 function SpriteFrame(layer, parentSpriteFrame) {
-    this.srcPos = new Point2D(layer.bounds[0].as("px"), layer.bounds[1].as("px"));
+    this.srcPos = new Point2D(layer.bounds[0].value, layer.bounds[1].value);
     this.destPos = new Point2D(0, 0);
     this.offset = new Point2D(0, 0);
-    this.w = layer.bounds[2].as("px") - this.srcPos.x;
-    this.h = layer.bounds[3].as("px") - this.srcPos.y;
-    this.name = layer.name;
+    this.w = layer.bounds[2].value - this.srcPos.x;
+    this.h = layer.bounds[3].value - this.srcPos.y;
+    this.name = layer.name; // Name as it will appear in the atlas
+    this.layerID = layer.id; // Unique ID for internal use
     this.points = {};
     if (parentSpriteFrame) {
         this.offset.x = this.srcPos.x - parentSpriteFrame.srcPos.x;

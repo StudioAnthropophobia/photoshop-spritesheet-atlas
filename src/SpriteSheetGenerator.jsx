@@ -3,11 +3,12 @@
 
 //@include "SpriteSheetGenerator/json2.js"
 
-//@include "SpriteSheetGenerator/ActionTranslate.jsx"
+//@include "SpriteSheetGenerator/Actions.jsx"
 //@include "SpriteSheetGenerator/AtlasFrame.jsx"
 //@include "SpriteSheetGenerator/LayerTags.jsx"
 //@include "SpriteSheetGenerator/Dialog/Dialog.jsx"
 //@include "SpriteSheetGenerator/OutputFiles.jsx"
+//@include "SpriteSheetGenerator/PackingTreeNode.jsx"
 //@include "SpriteSheetGenerator/PackingTree.jsx"
 //@include "SpriteSheetGenerator/PreProcess.jsx"
 //@include "SpriteSheetGenerator/SpriteDataCollection.jsx"
@@ -29,7 +30,6 @@ try {
         gScriptResult = "cancel";
     } else {
         gScriptResult = "ok";
-        alert("Sprite sheet generated successfully.", "Script finished " + "(" + ($.hiresTimer) / 1e6 + " seconds)");
     }
 } catch (e) {
     if (app.displayDialogs !== DialogModes.NO) {
@@ -62,7 +62,6 @@ function main() {
         return false;
     }
 
-    // Reset timer
     $.hiresTimer;
 
     // Duplicate, preprocess document
@@ -81,10 +80,8 @@ function main() {
     frameData.packFrames(userOptions);
     destDoc.resizeCanvas(frameData.packedWidth, frameData.packedHeight, AnchorPosition.TOPLEFT);
 
-    // Translate layers
-    frameData.translateLayers();
-
     // Layout layers in the output .psd according to packing result, merge
+    frameData.translateLayers();
     destDoc.mergeVisibleLayers();
     destDoc.artLayers[0].name = "Sprite Sheet";
 
@@ -112,6 +109,8 @@ function main() {
         destDoc.close(SaveOptions.DONOTSAVECHANGES);
         app.activeDocument = srcDoc;
     }
+    if (userOptions[kUserOptionsAlertOnFinishKey])
+        alert("Sprite sheet generated successfully.", "Script finished " + "(" + ($.hiresTimer) / 1e6 + " seconds)");
 
     return true;
 }

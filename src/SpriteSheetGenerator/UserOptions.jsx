@@ -1,4 +1,6 @@
 // Keys
+const kUserOptionsGlobalStorageKey = "SpriteSheetGeneratorGlobalOptions";
+const kUserOptionsAlertOnFinishKey = "alertOnFinish";
 const kUserOptionsPrefix = "SpriteSheetGeneratorOptions-";
 const kUserOptionsUseDefaultPathsKey = "useDefaultPaths";
 const kUserOptionsPNGPathKey = "PNGPath";
@@ -19,6 +21,7 @@ function getUserOptionsStorageKey() {
 }
 
 function storeLastUserOptions(userOptions) {
+    // Store options per-document
     const desc = new ActionDescriptor();
 
     putActionDescValue(desc, "putBoolean", kUserOptionsUseDefaultPathsKey, userOptions[kUserOptionsUseDefaultPathsKey]);
@@ -32,11 +35,19 @@ function storeLastUserOptions(userOptions) {
 
     const optionsKey = getUserOptionsStorageKey();
     app.putCustomOptions(optionsKey, desc, true);
+
+    // Store option(s) for entire script
+    const globalDesc = new ActionDescriptor();
+
+    putActionDescValue(globalDesc, "putBoolean", kUserOptionsAlertOnFinishKey, userOptions[kUserOptionsAlertOnFinishKey]);
+    app.putCustomOptions(kUserOptionsGlobalStorageKey, globalDesc, true);
 }
 
 function retrieveLastUserOptions() {
+    var globalDesc;
     var desc;
     try {
+        globalDesc = app.getCustomOptions(kUserOptionsGlobalStorageKey);
         desc = app.getCustomOptions(getUserOptionsStorageKey());
     } catch (e) {
         return {};
@@ -52,6 +63,8 @@ function retrieveLastUserOptions() {
     result[kUserOptionsKeepDestDocOpenKey] = getActionDescValue(desc, "getBoolean", kUserOptionsKeepDestDocOpenKey, false);
     result[kUserOptionsPaddingKey] = getActionDescValue(desc, "getInteger", kUserOptionsPaddingKey, 1);
     result[kUserOptionsSortByKey] = getActionDescValue(desc, "getString", kUserOptionsSortByKey, optionValueSortByArea);
+
+    result[kUserOptionsAlertOnFinishKey] = getActionDescValue(globalDesc, "getBoolean", kUserOptionsAlertOnFinishKey, true);
 
     return result;
 }
@@ -139,8 +152,12 @@ function getUserOptions(srcDoc) {
 
     // Other options
     const otherPanel = addTitledPanel(dlg, "Other Options");
+
     const keepOpenCheckBox = new CheckBox("Keep destination document open", false);
     keepOpenCheckBox.addToContainer(otherPanel);
+
+    const alertFinishedCheckBox = new CheckBox("Display alert after script finishes", true);
+    alertFinishedCheckBox.addToContainer(otherPanel);
 
     // "Generate" and "Cancel" buttons
     addCancelAndOKButtons(dlg, "Generate", "Cancel");
@@ -155,6 +172,7 @@ function getUserOptions(srcDoc) {
     paddingInput.setText(lastUserOptions[kUserOptionsPaddingKey]);
     sortRadioButtons.setByValue(lastUserOptions[kUserOptionsSortByKey]);
     keepOpenCheckBox.setValue(lastUserOptions[kUserOptionsKeepDestDocOpenKey]);
+    alertFinishedCheckBox.setValue(lastUserOptions[kUserOptionsAlertOnFinishKey]);
 
     jsonPicker.setEnabled(!defaultPathsCheckBox.getValue());
     pngPicker.setEnabled(!defaultPathsCheckBox.getValue());
@@ -177,6 +195,7 @@ function getUserOptions(srcDoc) {
     userOptions[kUserOptionsKeepDestDocOpenKey] = keepOpenCheckBox.getValue();
     userOptions[kUserOptionsPaddingKey] = paddingInput.parseAsNaturalNumber();
     userOptions[kUserOptionsSortByKey] = sortRadioButtons.getSelectedValue();
+    userOptions[kUserOptionsAlertOnFinishKey] = alertFinishedCheckBox.getValue();
 
     storeLastUserOptions(userOptions);
     return userOptions;

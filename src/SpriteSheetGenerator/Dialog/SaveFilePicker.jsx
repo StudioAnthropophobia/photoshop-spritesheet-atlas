@@ -27,7 +27,7 @@ SaveFilePicker.prototype.addToContainer = function(container) {
     this.browseButtonRef = this.horGroup.add("button", undefined, "Browse...");
     this.browseButtonRef.parentPicker = this;
     this.editTextRef.text = this.defaultPath;
-    this.fileObject = new File();
+    this.fileObject = new File(this.defaultPath);
     this.browseButtonRef.onClick = function() {
         // "this" refers to button
         const thisP = this.parentPicker;
@@ -49,9 +49,10 @@ SaveFilePicker.prototype.setEnabled = function(enabled) {
 
 SaveFilePicker.prototype.setPath = function(path) {
     if (path === undefined)
-        return;
+        this.editTextRef.text = this.defaultPath;
+    else
+        this.editTextRef.text = path;
 
-    this.editTextRef.text = path;
 };
 
 SaveFilePicker.prototype.getPath = function() {

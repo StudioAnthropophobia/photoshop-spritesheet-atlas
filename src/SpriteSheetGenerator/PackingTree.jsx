@@ -1,100 +1,25 @@
-function TreeNode(_x, _y, _w, _h) {
-    this.leftChild = null;
-    this.rightChild = null;
-    this.x = _x;
-    this.y = _y;
-    this.w = _w;
-    this.h = _h;
-    this.occupied = false;
-}
+function PackingTree(spriteFrames, userOptions, totalPixelArea) {
+    // Store reference to input data
+    this.spriteFrames = spriteFrames;
 
-function PackingOptions(pow2, sqr, padding, initialSize) {
-    this.pow2 = pow2;
-    this.sqr = sqr;
-    this.padding = padding;
-    this.initialSize = initialSize;
-}
+    // Options
+    this.padding = userOptions[kUserOptionsPaddingKey];
+    this.pow2 = userOptions[kUserOptionsPowerOfTwoKey];
+    this.sqr = userOptions[kUserOptionsSquareKey];
+    this.initialSize = Math.ceil(Math.sqrt(totalPixelArea));
 
-TreeNode.prototype.padding = 0;
+    // Set growth parameters depending on pow2
+    this.growthFactor = this.pow2 ? 2.0 : 1.1;
+    this.initialSize = this.pow2 ?
+        prevPowerOfTwo(this.initialSize) :
+        this.initialSize;
 
-TreeNode.prototype.splitHorizontally = function(spriteFrame) {
-    this.leftChild = new TreeNode(this.x, this.y,
-        spriteFrame.w + this.padding, this.h);
+    // Output
+    this.rootNode = null;
+    this.outputTranslationData = [];
 
-    this.rightChild = new TreeNode(
-        this.x + spriteFrame.w + this.padding, this.y,
-        this.w - spriteFrame.w - this.padding, this.h);
-};
-
-TreeNode.prototype.splitVertically = function(spriteFrame) {
-    this.leftChild = new TreeNode(this.x, this.y,
-        this.w, spriteFrame.h + this.padding);
-
-    this.rightChild = new TreeNode(this.x,
-        this.y + spriteFrame.h + this.padding,
-        this.w, this.h - spriteFrame.h - this.padding);
-};
-
-TreeNode.prototype.insert = function(spriteFrame) {
-    // Check whether this node is a leaf or not
-    if (this.leftChild != null || this.rightChild != null) {
-        // Node is not a leaf, try inserting into first child
-        const newNode = this.leftChild.insert(spriteFrame);
-        if (newNode != null) {
-            return newNode;
-        }
-
-        // No room, try inserting into the second child instead
-        return this.rightChild.insert(spriteFrame);
-    } else {
-        // Node is a leaf
-        // Return null if occupied
-        if (this.occupied) {
-            return null;
-        }
-
-        // Return null if this node is too small
-        if (spriteFrame.w + this.padding > this.w || spriteFrame.h + this.padding > this.h) {
-            return null;
-        }
-
-        // Perfect fit, write position to layer data and return this node
-        if (spriteFrame.w + this.padding === this.w && spriteFrame.h + this.padding === this.h) {
-            this.occupied = true;
-            spriteFrame.destPos.x = this.x;
-            spriteFrame.destPos.y = this.y;
-            spriteFrame.deltaX = this.x - spriteFrame.srcPos.x;
-            spriteFrame.deltaY = this.y - spriteFrame.srcPos.y;
-            return this;
-        }
-
-        // Otherwise, split node to create children
-        // Decide whether to split horizontally or vertically
-        const dw = this.w - spriteFrame.w;
-        const dh = this.h - spriteFrame.h;
-
-        if (dw > dh) {
-            this.splitHorizontally(spriteFrame);
-        } else {
-            this.splitVertically(spriteFrame);
-        }
-
-        // Insert into the first child that was just created (will fit perfectly)
-        return this.leftChild.insert(spriteFrame);
-    }
-};
-
-function buildTreeWithSize(spriteFrames, w, h) {
-    var root = new TreeNode(0, 0, w, h);
-    // return root.recursiveInsert(spriteFrames);
-
-    for (var i = 0; i < spriteFrames.length; i++) {
-        var frame = spriteFrames[i];
-        if (root.insert(frame) === null) {
-            return null;
-        }
-    }
-    return root;
+    // Set reference for nodes to to record output data 
+    PackingTreeNode.prototype.refToTranslationData = this.outputTranslationData;
 }
 
 function nextPowerOfTwo(num) {
@@ -115,45 +40,49 @@ function prevPowerOfTwo(num) {
     return prev;
 }
 
+PackingTree.prototype.tryBuildWithSize = function(w, h) {
+    // Clear output and root node
+    // PackingTreeNode prototype holds reference to translationData ->
+    // Set length to 0 instead of assigning []
+    this.outputTranslationData.length = 0;
+    this.rootNode = new PackingTreeNode(0, 0, w, h);
+
+    const len = this.spriteFrames.length;
+    for (var i = 0; i < len; ++i) {
+        var frame = this.spriteFrames[i];
+        if (this.rootNode.insert(frame, this.padding) === null) {
+            return null;
+        }
+    }
+    return this.rootNode;
+};
+
 // Interface /////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-function buildPackingTree(spriteFrames, options) {
-    var root = {};
-
-    TreeNode.prototype.padding = options.padding;
-    var initialD = options.initialSize;
-    const pow2 = options.pow2;
-    const sqr = options.sqr;
-
-    // Grow canvas by 10% by default, if pow2 not set
-    var growthFactor = 1.1;
-
-    if (pow2) {
-        growthFactor = 2;
-        initialD = prevPowerOfTwo(initialD);
-    }
-
-    var w = initialD;
-    var h = initialD;
+PackingTree.prototype.build = function() {
+    var w = this.initialSize;
+    var h = this.initialSize;
 
     // Brute force iterations with growing canvas size, until all frames fit
-    while ((root = buildTreeWithSize(spriteFrames, w, h)) === null) {
+    while ((this.tryBuildWithSize(w, h)) === null) {
         // Could not fit, canvas needs to grow
 
         /*  If power-of-two is forced but not square,
             it is more conservative to grow dimensions separately:
             doubling both dimensions unnecessarily leads to wasted space. */
-        if (pow2 && !sqr) {
+        if (this.pow2 && !this.sqr) {
             if (w > h)
-                h *= growthFactor;
+                h *= this.growthFactor;
             else
-                w *= growthFactor;
+                w *= this.growthFactor;
         } else
-            w = h = Math.floor(growthFactor * w);
-
-
+            w = h = Math.floor(this.growthFactor * w);
     }
 
-    return root;
-}
+    return {
+        w: this.rootNode.w,
+        h: this.rootNode.h,
+        translationData: this.outputTranslationData
+    };
+};

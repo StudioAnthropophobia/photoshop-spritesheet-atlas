@@ -21,7 +21,8 @@ RadioButtonSet.prototype.addButton = function(label, valueWhenTrue) {
 };
 
 RadioButtonSet.prototype.getSelectedValue = function() {
-    for (var i = 0; i < this.buttons.length; i++) {
+    const len = this.buttons.length;
+    for (var i = 0; i < len; ++i) {
         if (this.buttons[i].radioButtonRef.value === true) {
             return this.buttons[i].valueWhenTrue;
         }
@@ -40,7 +41,8 @@ RadioButtonSet.prototype.addToContainer = function(container) {
     this.btnGroupRef.orientation = "column";
     this.btnGroupRef.alignment = "left";
 
-    for (var i = 0; i < this.buttons.length; i++) {
+    const len = this.buttons.length;
+    for (var i = 0; i < len; ++i) {
         this.buttons[i].radioButtonRef = this.btnGroupRef.add(
             "radiobutton", undefined, this.buttons[i].label);
         this.buttons[i].radioButtonRef.alignment = "left";
@@ -62,7 +64,8 @@ RadioButtonSet.prototype.setByValue = function(value) {
     if (value === undefined)
         return;
 
-    for (var i = 0; i < this.buttons.length; i++) {
+    const len = this.buttons.length;
+    for (var i = 0; i < len; ++i) {
         if (this.buttons[i].valueWhenTrue === value) {
             this.buttons[i].radioButtonRef.value = true;
             return;
